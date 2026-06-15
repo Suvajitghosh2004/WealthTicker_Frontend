@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-white text-gray-900 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-600 focus:ring-2 focus:ring-brand-400 focus:ring-offset-2;
+  }
+  .btn-outline {
+    @apply btn border border-gray-300 text-gray-700 hover:bg-gray-50;
+  }
+  .btn-amazon {
+    @apply btn bg-[#FF9900] text-white hover:bg-[#e68900] text-sm font-semibold px-4 py-2;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+  .ad-wrapper {
+    @apply w-full flex items-center justify-center min-h-[90px] bg-gray-50 border border-dashed border-gray-200 rounded-lg;
+  }
+  .reading-progress {
+    @apply fixed top-0 left-0 h-1 bg-brand-500 z-50 transition-all duration-100;
+  }
+  .prose-article {
+    @apply prose prose-gray max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-brand-600 prose-img:rounded-xl;
+  }
+}
+
+/* TipTap editor */
+.ProseMirror {
+  @apply outline-none min-h-[300px] p-4;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply text-gray-400 pointer-events-none float-left h-0;
+}
