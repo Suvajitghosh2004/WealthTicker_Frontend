@@ -24,7 +24,7 @@ export default function Sidebar() {
       <div className="bg-brand-50 rounded-2xl p-6 border border-brand-100">
         <h3 className="font-bold text-gray-900 text-lg mb-1">💰 Weekly Money Tips</h3>
         <p className="text-sm text-gray-600 mb-4">
-          Join 10,000+ readers getting actionable finance insights every week.
+          Practical personal finance insights every week. Free.
         </p>
         <NewsletterForm compact />
       </div>

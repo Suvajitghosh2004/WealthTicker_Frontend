@@ -57,7 +57,7 @@ export default function AboutPage() {
         <div className="bg-brand-50 rounded-2xl p-8 mt-12 border border-brand-100">
           <h3 className="text-xl font-bold text-gray-900 mb-2">Join Our Newsletter</h3>
           <p className="text-gray-600 mb-6 text-sm">
-            Weekly money insights delivered every Thursday. Free forever.
+            Practical personal finance insights every week. Free forever, no spam.
           </p>
           <NewsletterForm />
         </div>

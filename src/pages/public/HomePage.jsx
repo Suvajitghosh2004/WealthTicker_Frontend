@@ -111,10 +111,14 @@ export default function HomePage() {
       {/* Newsletter CTA section */}
       <section className="bg-gray-900 text-white py-16">
         <div className="max-w-2xl mx-auto px-4 text-center">
-          <p className="text-brand-400 font-semibold text-sm uppercase tracking-wide mb-3">Free Weekly Newsletter</p>
-          <h2 className="text-3xl font-bold mb-4">Build Wealth One Email at a Time</h2>
+          <p className="text-brand-400 font-semibold text-sm uppercase tracking-wide mb-3">
+            Free Weekly Newsletter
+          </p>
+          <h2 className="text-3xl font-bold mb-4">
+            Build Wealth One Email at a Time
+          </h2>
           <p className="text-gray-400 mb-8">
-            Join 10,000+ subscribers getting actionable money tips every Thursday morning.
+            Practical money tips delivered every week. No fluff, no spam, no fake numbers.
           </p>
           <div className="max-w-md mx-auto">
             <NewsletterForm />

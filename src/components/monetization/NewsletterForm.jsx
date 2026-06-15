@@ -15,7 +15,7 @@ export default function NewsletterForm({ compact = false }) {
       await api.post('/newsletter/subscribe', { email })
       setSubscribed(true)
       setEmail('')
-      toast.success('You\'re in! Welcome to WealthTicker 🎉')
+      toast.success('Welcome! Check your inbox.')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Subscription failed')
     } finally {
@@ -58,7 +58,7 @@ export default function NewsletterForm({ compact = false }) {
       </div>
       {!compact && (
         <p className="text-xs text-gray-400 mt-2 text-center">
-          No spam. Unsubscribe anytime. 10,000+ readers.
+          Free every week. No spam. Unsubscribe anytime.
         </p>
       )}
     </form>
