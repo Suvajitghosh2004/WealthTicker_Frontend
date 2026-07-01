@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../services/api.js'
 import NewsletterForm from '../monetization/NewsletterForm.jsx'
+import Banner300x250 from '../monetization/Banner300x250.jsx'
 import { formatDateShort } from '../../utils/formatDate.js'
 
 export default function Sidebar() {
@@ -28,6 +29,9 @@ export default function Sidebar() {
         </p>
         <NewsletterForm compact />
       </div>
+
+      {/* Sidebar banner ad */}
+      <Banner300x250 />
 
       {/* Popular Posts */}
       {trending.length > 0 && (
