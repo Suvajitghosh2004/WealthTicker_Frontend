@@ -6,12 +6,24 @@ const api = axios.create({
   timeout: 15000
 })
 
-// Request interceptor — attach access token from localStorage
+// Safe localStorage reader
+const getStoredToken = () => {
+  try {
+    const raw = localStorage.getItem('wt-auth')
+    if (!raw || raw === 'undefined' || raw === 'null') return null
+    const parsed = JSON.parse(raw)
+    return parsed?.state?.accessToken || null
+  } catch {
+    // Corrupted storage — clear it
+    localStorage.removeItem('wt-auth')
+    return null
+  }
+}
+
+// Request interceptor — attach access token
 api.interceptors.request.use(
   (config) => {
-    // Read token fresh each request — avoids stale closure issue
-    const auth = JSON.parse(localStorage.getItem('wt-auth') || '{}')
-    const token = auth?.state?.accessToken
+    const token = getStoredToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -37,7 +49,6 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config
 
-    // Only attempt refresh on 401, and not on the refresh/login endpoint itself
     if (
       error.response?.status === 401 &&
       !original._retry &&
@@ -45,7 +56,6 @@ api.interceptors.response.use(
       !original.url?.includes('/auth/login')
     ) {
       if (isRefreshing) {
-        // Queue requests while refresh is in progress
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         }).then((token) => {
@@ -66,11 +76,18 @@ api.interceptors.response.use(
 
         const newToken = data.accessToken
 
-        // Update token in Zustand persisted storage
-        const stored = JSON.parse(localStorage.getItem('wt-auth') || '{}')
-        if (stored?.state) {
-          stored.state.accessToken = newToken
-          localStorage.setItem('wt-auth', JSON.stringify(stored))
+        // Safely update stored token
+        try {
+          const raw = localStorage.getItem('wt-auth')
+          if (raw) {
+            const stored = JSON.parse(raw)
+            if (stored?.state) {
+              stored.state.accessToken = newToken
+              localStorage.setItem('wt-auth', JSON.stringify(stored))
+            }
+          }
+        } catch {
+          localStorage.removeItem('wt-auth')
         }
 
         processQueue(null, newToken)
@@ -78,8 +95,6 @@ api.interceptors.response.use(
         return api(original)
       } catch (refreshError) {
         processQueue(refreshError, null)
-
-        // Clear auth state and redirect to login
         localStorage.removeItem('wt-auth')
         window.location.href = '/admin/login'
         return Promise.reject(refreshError)

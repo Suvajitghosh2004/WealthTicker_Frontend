@@ -1,11 +1,15 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../services/api.js'
 import NewsletterForm from '../monetization/NewsletterForm.jsx'
 import Banner300x250 from '../monetization/Banner300x250.jsx'
+import NativeBanner from '../monetization/NativeBanner.jsx'
 import { formatDateShort } from '../../utils/formatDate.js'
 
 export default function Sidebar() {
+  const location = useLocation()
+  const isPostPage = location.pathname.startsWith('/post/')
+
   const { data: trendingData } = useQuery({
     queryKey: ['trending'],
     queryFn: () => api.get('/posts/trending').then(r => r.data)
@@ -30,8 +34,13 @@ export default function Sidebar() {
         <NewsletterForm compact />
       </div>
 
-      {/* Sidebar banner ad */}
-      <Banner300x250 />
+      {/* Ad — NativeBanner on post page, Banner300x250 on other pages */}
+      <div>
+        <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-2">
+          Advertisement
+        </p>
+        {isPostPage ? <NativeBanner /> : <Banner300x250 />}
+      </div>
 
       {/* Popular Posts */}
       {trending.length > 0 && (
@@ -52,7 +61,9 @@ export default function Sidebar() {
                   >
                     {post.title}
                   </Link>
-                  <p className="text-xs text-gray-400 mt-0.5">{formatDateShort(post.createdAt)}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {formatDateShort(post.createdAt)}
+                  </p>
                 </div>
               </li>
             ))}

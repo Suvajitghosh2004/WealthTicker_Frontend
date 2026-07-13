@@ -8,8 +8,11 @@ export default function NativeBanner() {
     if (loaded.current || !ref.current) return
     loaded.current = true
 
+    // Clear any previous content
+    ref.current.innerHTML = ''
+
     const container = document.createElement('div')
-    container.id = 'container-37894012c8f7b6e34f8c5777af7be6ac'
+    container.id = `container-37894012c8f7b6e34f8c5777af7be6ac-${Math.random().toString(36).slice(2)}`
     ref.current.appendChild(container)
 
     const script = document.createElement('script')
@@ -19,5 +22,10 @@ export default function NativeBanner() {
     ref.current.appendChild(script)
   }, [])
 
-  return <div ref={ref} className="my-6 w-full" />
+  return (
+    <div
+      ref={ref}
+      className="my-8 w-full min-h-[100px]"
+    />
+  )
 }
