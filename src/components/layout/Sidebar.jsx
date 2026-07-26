@@ -3,12 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import api from '../../services/api.js'
 import NewsletterForm from '../monetization/NewsletterForm.jsx'
 import Banner300x250 from '../monetization/Banner300x250.jsx'
-import NativeBanner from '../monetization/NativeBanner.jsx'
 import { formatDateShort } from '../../utils/formatDate.js'
 
 export default function Sidebar() {
   const location = useLocation()
-  const isPostPage = location.pathname.startsWith('/post/')
 
   const { data: trendingData } = useQuery({
     queryKey: ['trending'],
@@ -34,12 +32,12 @@ export default function Sidebar() {
         <NewsletterForm compact />
       </div>
 
-      {/* Ad — NativeBanner on post page, Banner300x250 on other pages */}
+      {/* Sidebar Banner */}
       <div>
         <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-2">
           Advertisement
         </p>
-        {isPostPage ? <NativeBanner /> : <Banner300x250 />}
+        <Banner300x250 key={`sidebar-${location.pathname}`} />
       </div>
 
       {/* Popular Posts */}

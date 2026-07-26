@@ -175,14 +175,11 @@ export default function PostPage() {
             {/* ── End of post — Native Banner ── */}
             <div className="mt-10 pt-8 border-t border-gray-100">
               <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-3">
-                Sponsored
+                Advertisement
               </p>
-              <NativeBanner />
+              <NativeBanner key={`post-native-${post._id}`} />
             </div>
-
-            {/* Ad before comments */}
-            <AdUnit slot="4567890123" />
-
+            
             {/* Comments */}
             {post.allowComments && (
               <div className="mt-12">
