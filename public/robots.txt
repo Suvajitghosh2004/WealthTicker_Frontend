@@ -4,4 +4,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /admin/*
 
-Sitemap: https://wealthticker.com/sitemap.xml
+Sitemap: https://wealthticker.vercel.app/sitemap.xml
