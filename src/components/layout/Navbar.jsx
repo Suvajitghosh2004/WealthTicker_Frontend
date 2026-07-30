@@ -3,21 +3,20 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../services/api.js'
 
-const CATEGORIES = [
-  { name: 'Investing', slug: 'investing' },
-  { name: 'Budgeting', slug: 'budgeting' },
-  { name: 'Crypto', slug: 'crypto' },
-  { name: 'Tax', slug: 'tax' },
-  { name: 'Credit Cards', slug: 'credit-cards' },
-  { name: 'Retirement', slug: 'retirement' }
-]
-
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQ, setSearchQ] = useState('')
   const [scrolled, setScrolled] = useState(false)
   const navigate = useNavigate()
+
+  const { data: catData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => api.get('/categories').then(r => r.data),
+    staleTime: 10 * 60 * 1000
+  })
+
+  const categories = catData?.categories || []
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -48,14 +47,14 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {CATEGORIES.map((cat) => (
+          {/* Desktop Nav — dynamic from DB */}
+          <nav className="hidden md:flex items-center gap-1 overflow-x-auto">
+            {categories.map((cat) => (
               <NavLink
-                key={cat.slug}
+                key={cat._id}
                 to={`/category/${cat.slug}`}
                 className={({ isActive }) =>
-                  `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  `px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                     isActive
                       ? 'bg-brand-50 text-brand-700'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -96,12 +95,14 @@ export default function Navbar() {
               </button>
             )}
 
-            <Link
-              to="/category/investing"
-              className="hidden sm:inline-flex btn-primary text-sm px-4 py-2 rounded-lg"
-            >
-              Start Investing
-            </Link>
+            {categories.length > 0 && (
+              <Link
+                to={`/category/${categories[0]?.slug}`}
+                className="hidden sm:inline-flex btn-primary text-sm px-4 py-2 rounded-lg"
+              >
+                Start Investing
+              </Link>
+            )}
 
             {/* Mobile hamburger */}
             <button
@@ -122,9 +123,9 @@ export default function Navbar() {
         {/* Mobile menu */}
         {menuOpen && (
           <div className="md:hidden py-3 border-t border-gray-100">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <NavLink
-                key={cat.slug}
+                key={cat._id}
                 to={`/category/${cat.slug}`}
                 onClick={() => setMenuOpen(false)}
                 className={({ isActive }) =>

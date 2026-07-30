@@ -21,6 +21,108 @@ const DEFAULT_FORM = {
   scheduledAt: '', affiliateCards: []
 }
 
+// ── HTML Importer ──────────────────────────────────────────────
+function HTMLImporter({ onImport }) {
+  const [rawHTML, setRawHTML] = useState('')
+  const [preview, setPreview] = useState(false)
+
+  const extractBody = (html) => {
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+    if (bodyMatch) return bodyMatch[1].trim()
+    return html.trim()
+  }
+
+  const handleImport = () => {
+    if (!rawHTML.trim()) {
+      toast.error('Paste some HTML first')
+      return
+    }
+    const extracted = extractBody(rawHTML)
+    onImport(extracted)
+    setRawHTML('')
+    setPreview(false)
+  }
+
+  return (
+    <div className="space-y-3">
+      <textarea
+        value={rawHTML}
+        onChange={(e) => setRawHTML(e.target.value)}
+        rows={12}
+        placeholder={`Paste your HTML here...\n\nExamples:\n• Full HTML page (<!DOCTYPE html>...)\n• Just a table (<table>...</table>)\n• Any HTML snippet`}
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none bg-gray-50"
+        spellCheck={false}
+      />
+      {rawHTML && (
+        <p className="text-xs text-gray-400 text-right">
+          {rawHTML.length.toLocaleString()} characters
+        </p>
+      )}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleImport}
+          disabled={!rawHTML.trim()}
+          className="flex-1 btn-primary rounded-xl py-2.5 text-sm disabled:opacity-40"
+        >
+          ✓ Import to Editor
+        </button>
+        <button
+          type="button"
+          onClick={() => setPreview(!preview)}
+          disabled={!rawHTML.trim()}
+          className="btn-outline rounded-xl px-4 py-2.5 text-sm disabled:opacity-40"
+        >
+          {preview ? 'Hide' : 'Preview'}
+        </button>
+        {rawHTML && (
+          <button
+            type="button"
+            onClick={() => { setRawHTML(''); setPreview(false) }}
+            className="btn-outline rounded-xl px-4 py-2.5 text-sm text-red-500 border-red-200 hover:bg-red-50"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {preview && rawHTML && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+            Preview — how it will render
+          </p>
+          <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gray-100 px-3 py-2 border-b border-gray-200 flex items-center gap-2">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+              </div>
+              <span className="text-xs text-gray-400 ml-1">Rendered HTML</span>
+            </div>
+            <iframe
+              srcDoc={rawHTML}
+              title="HTML Preview"
+              className="w-full"
+              style={{ height: '400px', border: 'none' }}
+              sandbox="allow-same-origin"
+            />
+          </div>
+          {rawHTML.toLowerCase().includes('<body') && (
+            <div className="flex gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+              <span className="text-sm">ℹ️</span>
+              <p className="text-xs text-blue-700">
+                Full HTML document detected. Only the &lt;body&gt; content will be imported into the editor.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Main Editor ────────────────────────────────────────────────
 export default function PostEditorPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -32,14 +134,12 @@ export default function PostEditorPage() {
   const [activeTab, setActiveTab] = useState('content')
   const [uploading, setUploading] = useState(false)
 
-  // Fetch categories
   const { data: catData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => api.get('/categories').then(r => r.data)
   })
   const categories = catData?.categories || []
 
-  // Fetch existing post by _id via admin route
   const { data: postData, isLoading: postLoading } = useQuery({
     queryKey: ['admin-post', id],
     queryFn: () => api.get(`/admin/posts/${id}`).then(r => r.data),
@@ -63,7 +163,6 @@ export default function PostEditorPage() {
     }
   })
 
-  // Populate form + editor once both are ready — guard prevents re-runs
   useEffect(() => {
     if (!postData?.post || !editor || editorPopulated.current) return
     const p = postData.post
@@ -84,7 +183,6 @@ export default function PostEditorPage() {
       scheduledAt:     p.scheduledAt     || '',
       affiliateCards:  p.affiliateCards  || []
     })
-    // false = don't emit onUpdate, prevents overwriting readTime on load
     editor.commands.setContent(p.content || '', false)
     editorPopulated.current = true
   }, [postData, editor])
@@ -105,39 +203,36 @@ export default function PostEditorPage() {
   }
 
   const handleThumbnailUpload = async (e) => {
-  const file = e.target.files[0]
-  if (!file) return
-
-  // Client-side validation
-  const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-  if (!allowed.includes(file.type)) {
-    toast.error('Only JPG, PNG and WebP images allowed')
-    return
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    toast.error('Image must be under 5MB')
-    return
-  }
-
-  setUploading(true)
-  try {
-    const fd = new FormData()
-    fd.append('image', file)
-    const { data } = await api.post('/admin/media/upload', fd, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 60000 // 60s for image uploads
-    })
-    if (data.url) {
-      setForm(f => ({ ...f, thumbnail: data.url }))
-      toast.success('Thumbnail uploaded!')
+    const file = e.target.files[0]
+    if (!file) return
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!allowed.includes(file.type)) {
+      toast.error('Only JPG, PNG and WebP images allowed')
+      return
     }
-  } catch (err) {
-    toast.error(err.response?.data?.message || 'Upload failed')
-  } finally {
-    setUploading(false)
-    e.target.value = ''
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB')
+      return
+    }
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const { data } = await api.post('/admin/media/upload', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000
+      })
+      if (data.url) {
+        setForm(f => ({ ...f, thumbnail: data.url }))
+        toast.success('Thumbnail uploaded!')
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Upload failed')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
   }
-}
 
   const saveMutation = useMutation({
     mutationFn: (payload) =>
@@ -213,6 +308,7 @@ export default function PostEditorPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* ── Main editor column ── */}
         <div className="lg:col-span-2 space-y-4">
           <input
             type="text"
@@ -233,23 +329,25 @@ export default function PostEditorPage() {
             />
           </div>
 
-          <div className="flex gap-1 border-b border-gray-100">
-            {['content', 'excerpt', 'seo', 'affiliate'].map((tab) => (
+          {/* Tabs */}
+          <div className="flex gap-1 border-b border-gray-100 overflow-x-auto">
+            {['content', 'excerpt', 'seo', 'affiliate', 'html'].map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2.5 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+                className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap capitalize transition-colors border-b-2 -mb-px ${
                   activeTab === tab
                     ? 'border-brand-500 text-brand-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {tab}
+                {tab === 'html' ? '⬆️ Import HTML' : tab}
               </button>
             ))}
           </div>
 
+          {/* Content tab */}
           {activeTab === 'content' && (
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
               {editor && (
@@ -326,6 +424,7 @@ export default function PostEditorPage() {
             </div>
           )}
 
+          {/* Excerpt tab */}
           {activeTab === 'excerpt' && (
             <div className="bg-white border border-gray-200 rounded-2xl p-5">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -344,6 +443,7 @@ export default function PostEditorPage() {
             </div>
           )}
 
+          {/* SEO tab */}
           {activeTab === 'seo' && (
             <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
               <h3 className="font-semibold text-gray-900">SEO Settings</h3>
@@ -409,15 +509,41 @@ export default function PostEditorPage() {
             </div>
           )}
 
+          {/* Affiliate tab */}
           {activeTab === 'affiliate' && (
             <AffiliateCardsEditor
               cards={form.affiliateCards}
               onChange={(cards) => setForm(f => ({ ...f, affiliateCards: cards }))}
             />
           )}
+
+          {/* HTML Import tab */}
+          {activeTab === 'html' && (
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Import HTML</h3>
+                <p className="text-xs text-gray-400">
+                  Paste any HTML code here. Click "Import to Editor" to load it into the content editor.
+                  Full HTML documents (with &lt;html&gt;, &lt;head&gt;, &lt;body&gt; tags) are also supported — only the body content will be extracted.
+                </p>
+              </div>
+              <HTMLImporter
+                onImport={(html) => {
+                  if (editor) {
+                    editor.commands.setContent(html, true)
+                    setForm(f => ({ ...f, content: html }))
+                    setActiveTab('content')
+                    toast.success('HTML imported into editor!')
+                  }
+                }}
+              />
+            </div>
+          )}
         </div>
 
+        {/* ── Right sidebar ── */}
         <div className="space-y-4">
+          {/* Publish */}
           <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
             <h3 className="font-semibold text-gray-900">Publish</h3>
             <div>
@@ -455,6 +581,7 @@ export default function PostEditorPage() {
             </div>
           </div>
 
+          {/* Category */}
           <div className="bg-white border border-gray-200 rounded-2xl p-5">
             <h3 className="font-semibold text-gray-900 mb-3">Category</h3>
             <select
@@ -470,6 +597,7 @@ export default function PostEditorPage() {
             </select>
           </div>
 
+          {/* Tags */}
           <div className="bg-white border border-gray-200 rounded-2xl p-5">
             <h3 className="font-semibold text-gray-900 mb-3">Tags</h3>
             <input
@@ -483,6 +611,7 @@ export default function PostEditorPage() {
             <p className="text-xs text-gray-400 mt-1">Comma-separated</p>
           </div>
 
+          {/* Thumbnail */}
           <div className="bg-white border border-gray-200 rounded-2xl p-5">
             <h3 className="font-semibold text-gray-900 mb-3">Thumbnail</h3>
             {form.thumbnail && (
@@ -514,6 +643,7 @@ export default function PostEditorPage() {
   )
 }
 
+// ── Affiliate Cards Editor ─────────────────────────────────────
 function AffiliateCardsEditor({ cards, onChange }) {
   const addCard = () => onChange([...cards, { productName: '', productImage: '', amazonUrl: '', price: '', badge: '' }])
   const removeCard = (i) => onChange(cards.filter((_, idx) => idx !== i))

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../services/api.js'
 import SEOHead from '../../components/seo/SEOHead.jsx'
@@ -10,20 +9,17 @@ import NewsletterForm from '../../components/monetization/NewsletterForm.jsx'
 import AdUnit from '../../components/monetization/AdUnit.jsx'
 import Pagination from '../../components/ui/Pagination.jsx'
 
-const CATEGORIES = [
-  { name: 'All', slug: null },
-  { name: 'Investing', slug: 'investing' },
-  { name: 'Budgeting', slug: 'budgeting' },
-  { name: 'Crypto', slug: 'crypto' },
-  { name: 'Tax', slug: 'tax' },
-  { name: 'Credit Cards', slug: 'credit-cards' },
-  { name: 'Retirement', slug: 'retirement' }
-]
-
 export default function HomePage() {
   const [page, setPage] = useState(1)
   const [activeCategory, setActiveCategory] = useState(null)
-  const navigate = useNavigate()
+
+  // Fetch categories dynamically
+  const { data: catData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => api.get('/categories').then(r => r.data),
+    staleTime: 10 * 60 * 1000
+  })
+  const categories = catData?.categories || []
 
   const { data: featuredData } = useQuery({
     queryKey: ['featured'],
@@ -74,13 +70,22 @@ export default function HomePage() {
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col lg:flex-row gap-10">
-          {/* Posts column */}
           <div className="flex-1 min-w-0">
-            {/* Category filter tabs */}
+            {/* Category filter tabs — dynamic from DB */}
             <div className="flex gap-2 flex-wrap mb-8">
-              {CATEGORIES.map((cat) => (
+              <button
+                onClick={() => handleCategoryChange(null)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeCategory === null
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
                 <button
-                  key={cat.slug ?? 'all'}
+                  key={cat._id}
                   onClick={() => handleCategoryChange(cat.slug)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     activeCategory === cat.slug
@@ -108,17 +113,15 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Newsletter CTA section */}
+      {/* Newsletter CTA */}
       <section className="bg-gray-900 text-white py-16">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <p className="text-brand-400 font-semibold text-sm uppercase tracking-wide mb-3">
             Free Weekly Newsletter
           </p>
-          <h2 className="text-3xl font-bold mb-4">
-            Build Wealth One Email at a Time
-          </h2>
+          <h2 className="text-3xl font-bold mb-4">Build Wealth One Email at a Time</h2>
           <p className="text-gray-400 mb-8">
-            Practical money tips delivered every week. No fluff, no spam, no fake numbers.
+            Practical money tips delivered every week. No fluff, no spam.
           </p>
           <div className="max-w-md mx-auto">
             <NewsletterForm />
