@@ -8,6 +8,7 @@ import RelatedPosts from '../../components/blog/RelatedPosts.jsx'
 import AffiliateCard from '../../components/monetization/AffiliateCard.jsx'
 import AdUnit from '../../components/monetization/AdUnit.jsx'
 import NativeBanner from '../../components/monetization/NativeBanner.jsx'
+import Banner300x250 from '../../components/monetization/Banner300x250.jsx'
 import ShareButtons from '../../components/ui/ShareButtons.jsx'
 import Sidebar from '../../components/layout/Sidebar.jsx'
 import CommentList from '../../components/comments/CommentList.jsx'
@@ -16,9 +17,50 @@ import Spinner from '../../components/ui/Spinner.jsx'
 import PageError from '../../components/ui/PageError.jsx'
 import { formatDate } from '../../utils/formatDate.js'
 import { formatReadTime } from '../../utils/readTime.js'
+import { Helmet } from 'react-helmet-async'
+
+// ── Extract FAQs from post HTML content ───────────────────────
+const extractFAQs = (html) => {
+  if (!html || typeof window === 'undefined') return []
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    const headings = doc.querySelectorAll('h2, h3')
+    const faqs = []
+
+    headings.forEach((heading) => {
+      const question = heading.textContent.trim()
+      if (!question.endsWith('?')) return
+
+      let answer = ''
+      let next = heading.nextElementSibling
+      while (next && !['H2', 'H3'].includes(next.tagName)) {
+        answer += next.textContent.trim() + ' '
+        next = next.nextElementSibling
+      }
+
+      if (answer.trim()) {
+        faqs.push({
+          '@type': 'Question',
+          name: question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: answer.trim().slice(0, 500)
+          }
+        })
+      }
+    })
+
+    return faqs.slice(0, 5)
+  } catch {
+    return []
+  }
+}
 
 export default function PostPage() {
   const { slug } = useParams()
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://wealthticker.vercel.app'
+  const siteName = import.meta.env.VITE_SITE_NAME || 'WealthTicker'
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['post', slug],
@@ -49,7 +91,8 @@ export default function PostPage() {
     return <PageError status={status} onRetry={refetch} />
   }
 
-  const canonicalUrl = `${import.meta.env.VITE_SITE_URL}/post/${post.slug}`
+  const canonicalUrl = `${siteUrl}/post/${post.slug}`
+  const faqs = extractFAQs(post.content)
 
   return (
     <>
@@ -67,7 +110,26 @@ export default function PostPage() {
           updatedAt: post.updatedAt,
           excerpt: post.excerpt
         }}
+        breadcrumb={[
+          { name: 'Home', url: siteUrl },
+          ...(post.category ? [{ name: post.category.name, url: `${siteUrl}/category/${post.category.slug}` }] : []),
+          { name: post.title, url: canonicalUrl }
+        ]}
       />
+
+      {/* FAQ Schema */}
+      {faqs.length > 0 && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: faqs
+            })}
+          </script>
+        </Helmet>
+      )}
+
       <ReadingProgress />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -115,11 +177,18 @@ export default function PostPage() {
               {post.author && (
                 <span className="font-medium text-gray-700">{post.author.name}</span>
               )}
-              <time>{formatDate(post.createdAt)}</time>
+              <time dateTime={post.createdAt}>{formatDate(post.createdAt)}</time>
               {post.readTime && <span>{formatReadTime(post.readTime)}</span>}
               <span>{post.views?.toLocaleString()} views</span>
             </div>
-
+            {/* Affiliate disclosure — only show if post has affiliate cards */}
+            {post.affiliateCards?.length > 0 && (
+              <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-6 text-xs text-amber-800">
+                <strong>Disclosure:</strong> This post may contain affiliate links.
+                We may earn a commission if you click and make a purchase,
+                at no extra cost to you. We only recommend products we trust.
+              </div>
+            )}
             {/* Thumbnail */}
             {post.thumbnail && (
               <div className="aspect-[16/9] rounded-2xl overflow-hidden mb-8">
@@ -128,6 +197,9 @@ export default function PostPage() {
                   alt={post.title}
                   className="w-full h-full object-cover"
                   loading="eager"
+                  decoding="async"
+                  width="800"
+                  height="450"
                 />
               </div>
             )}
@@ -150,7 +222,10 @@ export default function PostPage() {
             {post.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-8">
                 {post.tags.map((tag) => (
-                  <span key={tag} className="badge bg-gray-100 text-gray-600 text-xs">
+                  <span
+                    key={tag}
+                    className="badge bg-gray-100 text-gray-600 text-xs"
+                  >
                     {tag}
                   </span>
                 ))}
@@ -172,14 +247,14 @@ export default function PostPage() {
             {/* Related posts */}
             <RelatedPosts posts={related} />
 
-            {/* ── End of post — Native Banner ── */}
+            {/* Native Banner before comments */}
             <div className="mt-10 pt-8 border-t border-gray-100">
               <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-3">
-                Advertisement
+                Sponsored
               </p>
               <NativeBanner key={`post-native-${post._id}`} />
             </div>
-            
+
             {/* Comments */}
             {post.allowComments && (
               <div className="mt-12">

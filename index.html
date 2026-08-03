@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -8,22 +8,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F59E0B" />
 
+    <!-- Preconnect to speed up external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://wealthticker.onrender.com" />
+
+    <!-- Impact.com site verification -->
+    <meta name='impact-site-verification' value='113cc360-7da2-4876-8e6e-4e86d16afeb4'>
+
+    <!-- Impact.com Publisher Tag -->
+    <script type="text/javascript">
+      (function(i,m,p,a,c,t){c.ire_o=p;c[p]=c[p]||function(){(c[p].a=c[p].a||[]).push(arguments)};t=a.createElement(m);var z=a.getElementsByTagName(m)[0];t.async=1;t.src=i;z.parentNode.insertBefore(t,z)})('https://utt.impactcdn.com/P-A7477158-33ef-4a42-aedf-2bb6dda661051.js','script','impactStat',document,window);impactStat('trackImpression');
+    </script>
+
     <title>WealthTicker — Smart Money. Better Life.</title>
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CTPWQ9NESM"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-CTPWQ9NESM');
-    </script>
+    <!-- Google AdSense -->
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXX"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <!-- Adsterra Social Bar -->
-    <script src="https://pl30148843.effectivecpmnetwork.com/c0/cb/c4/c0cbc40e6d857745e30e6862c95a2f0e.js"></script>
+    <!-- Adsterra Social Bar — defer prevents render blocking -->
+    <script
+      defer
+      src="https://pl30148843.effectivecpmnetwork.com/c0/cb/c4/c0cbc40e6d857745e30e6862c95a2f0e.js">
+    </script>
   </body>
 </html>

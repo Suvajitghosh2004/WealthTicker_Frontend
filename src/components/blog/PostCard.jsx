@@ -11,8 +11,11 @@ export default function PostCard({ post, featured = false }) {
           <img
             src={post.thumbnail}
             alt={post.title}
+            width="800"
+            height="450"
             className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${featured ? 'md:h-full h-56' : 'h-48 sm:h-52'}`}
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className={`w-full bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center ${featured ? 'h-56 md:h-full' : 'h-48 sm:h-52'}`}>

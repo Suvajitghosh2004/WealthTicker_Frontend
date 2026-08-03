@@ -1,56 +1,50 @@
 import { useEffect, useRef } from 'react'
 
-let instanceCount = 0
-
 export default function Banner300x250() {
-  const ref = useRef(null)
-  const loaded = useRef(false)
-  const instanceId = useRef(`banner_${++instanceCount}_${Math.random().toString(36).slice(2)}`)
+  const iframeRef = useRef(null)
 
   useEffect(() => {
-    if (loaded.current || !ref.current) return
-    loaded.current = true
+    if (!iframeRef.current) return
+    const doc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document
+    if (!doc) return
 
-    const id = instanceId.current
-    ref.current.innerHTML = ''
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: transparent; display: flex; justify-content: center; align-items: center; width: 300px; height: 250px; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <script>
+    window.atOptions = {
+      'key': '88300842e1274ed47612cd3fa85f042c',
+      'format': 'iframe',
+      'height': 250,
+      'width': 300,
+      'params': {}
+    };
+  <\/script>
+  <script src="https://www.highperformanceformat.com/88300842e1274ed47612cd3fa85f042c/invoke.js"><\/script>
+</body>
+</html>`
 
-    // Scope atOptions to this instance using a unique variable name
-    const optionsScript = document.createElement('script')
-    optionsScript.innerHTML = `
-      window['atOptions_${id}'] = {
-        'key' : '88300842e1274ed47612cd3fa85f042c',
-        'format' : 'iframe',
-        'height' : 250,
-        'width' : 300,
-        'params' : {}
-      };
-      window.atOptions = window['atOptions_${id}'];
-    `
-    ref.current.appendChild(optionsScript)
-
-    // Create a wrapper div for this instance
-    const wrapper = document.createElement('div')
-    wrapper.id = `banner-wrapper-${id}`
-    ref.current.appendChild(wrapper)
-
-    // Load invoke script into this wrapper
-    const invokeScript = document.createElement('script')
-    invokeScript.src = 'https://www.highperformanceformat.com/88300842e1274ed47612cd3fa85f042c/invoke.js'
-    invokeScript.async = true
-    invokeScript.setAttribute('data-instance', id)
-    wrapper.appendChild(invokeScript)
-
-    return () => {
-      // Cleanup on unmount
-      delete window[`atOptions_${id}`]
-    }
+    doc.open()
+    doc.write(html)
+    doc.close()
   }, [])
 
   return (
-    <div className="my-6 flex justify-center">
-      <div
-        ref={ref}
-        style={{ width: 300, minHeight: 250 }}
+    <div
+      className="my-6 flex justify-center"
+      style={{ minHeight: '250px' }} // ← Reserve space to prevent CLS
+    >
+      <iframe
+        ref={iframeRef}
+        style={{ width: '300px', height: '250px', border: 'none', display: 'block' }}
+        scrolling="no"
+        title="Advertisement"
       />
     </div>
   )

@@ -10,15 +10,12 @@ export default function NativeBanner() {
     if (mounted.current) return
     mounted.current = true
 
-    // Remove any existing script to avoid duplicates
     const existingScript = document.querySelector(`script[src="${SCRIPT_SRC}"]`)
     if (existingScript) existingScript.remove()
 
-    // Make sure container exists
     const container = document.getElementById(CONTAINER_ID)
     if (!container) return
 
-    // Load script after container is confirmed in DOM
     const script = document.createElement('script')
     script.async = true
     script.setAttribute('data-cfasync', 'false')
@@ -27,7 +24,10 @@ export default function NativeBanner() {
   }, [])
 
   return (
-    <div className="my-6 w-full min-h-[100px]">
+    <div
+      className="my-6 w-full"
+      style={{ minHeight: '120px' }} // ← Reserve space to prevent CLS
+    >
       <div id={CONTAINER_ID} />
     </div>
   )
